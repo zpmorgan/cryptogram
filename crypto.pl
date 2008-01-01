@@ -128,6 +128,14 @@ sub gen_random_key{
         $decrypt{$alpha[$_]} = $array[$_];
         $encrypt{$array[$_]} = $alpha[$_];
     }
+    #ensure a derangement
+    for (0..$#alpha){
+        if ($alpha[$_] eq $array[$_]) {
+            gen_random_key();
+            #warn 'another key..';
+            return;
+        }
+    }
 }
 
 sub getGuess{
