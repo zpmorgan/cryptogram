@@ -12,7 +12,11 @@ my $key;
 my $numColumns = 34;
 my %encrypt;
 my %decrypt;
-my %guesses;# = qw|A A B B C V F D|;
+my %guesses;  #win when enough of %guesses is like %encrypt. (not all letters are used.)
+my %guessLabels; #lists of (empty at first) labels in fortuneview
+my @guessEntries; #list of 26 entries in guesstable
+my $winning_message = 
+    "Congratulations. You took 5 points from Jack Bauer. Run.";
 
 my $win = Gtk2::Window->new();
 $win->signal_connect("delete_event", sub {Gtk2->main_quit} );
@@ -86,29 +90,44 @@ sub encrypt{
     return $char unless defined $encrypt{$char};
     return $encrypt{$char};
 }
+sub decrypt{
+    my $char = shift;
+    return $char unless defined $encrypt{$char};
+    return $decrypt{$char};
+}
 
+#is for fortuneview:
 sub insert_char_label{
-    my ($char, $col, $row) = @_;
-    my $lbl = Gtk2::Label->new($char);
+    my ($lbl, $col, $row) = @_;
     $fortuneView->attach_defaults ($lbl, $col,$col+1, $row,$row+1);
     #print"$char $col $row\n";
 }
 
-#set data in the table
-sub reloadFortuneView{
+#split into lines and then split each line into chars
+sub get_fortune_chars{
     $Text::Wrap::columns = $numColumns;
-    #split into lines and then split each line into chars
     my @splitFortune = split ("\n", wrap('','',$fortune));
     @splitFortune = map { [split('',$_)] } @splitFortune;
-    #someone should clear fortuneview
+    return @splitFortune;
+}
+
+#set data in the table
+sub reloadFortuneView{
+    %guessLabels = ();
+    my @splitFortune = get_fortune_chars();
     for (my $rownum=0 ; $rownum<@splitFortune ; $rownum++){
         my @line=@{$splitFortune[$rownum]};
         for (my $colnum=0 ; $colnum<@line ; $colnum++){
             my $char=$line[$colnum];
-            insert_char_label (getGuess ($encrypt{$char} or $char), $colnum, 3*$rownum);
-            insert_char_label (encrypt($char), $colnum, 3*$rownum+1);
+            
+            my $label1 = Gtk2::Label->new (getGuess ($encrypt{$char} or $char));
+            insert_char_label ($label1, $colnum, 3*$rownum);
+            push @{$guessLabels{$char}}, $label1;
+            
+            my $label2 = Gtk2::Label->new (encrypt($char));
+            insert_char_label ($label2, $colnum, 3*$rownum+1);
         }
-        insert_char_label(' ', 0, 3*$rownum+2)
+        insert_char_label(Gtk2::Label->new(' '), 0, 3*$rownum+2)
      #   print @line, "\n";
     }
 }
@@ -118,14 +137,19 @@ sub reloadGuessTable{
     for (0..$#alpha){
         my $char = $alpha[$_];
         my $guessEntry = Gtk2::Entry->new_with_max_length (1);
+        #$guessEntry->set_text('');
+        
         $guessEntry->set_size_request(20,20);
         $guessEntry->set_text(getGuess($char));
         $guessTable->attach_defaults ($guessEntry, $_,$_+1, 0,1);
-        $guessEntry->signal_connect("activate", \&make_guess, $char);
+        #$guessEntry->signal_connect("delete-from-cursor", \&make_guess, $char);
+        $guessEntry->signal_connect("changed", \&make_guess, decrypt($char));
+        $guessEntries[$_] = $guessEntry;
         
         my $lbl = Gtk2::Label->new ($char);
         $guessTable->attach_defaults ($lbl, $_,$_+1, 1,2);
     }
+    map {$_->set_text('')} @guessEntries; #so they don't start with spaces for some reason
 }
 
 sub make_guess{
@@ -135,7 +159,13 @@ sub make_guess{
         $guesses{$char} = uc $guess
     }
     else{
+        $entry->set_text('');
         delete $guesses{$char}
     }
-    reload_crypto_tables();
+    #adjust fortuneview to new guess
+    for my $lbl (@{$guessLabels{$char}}){
+        my $text = defined $guesses{$char} ? $guesses{$char} : '_';
+        $lbl->set_text($text)
+    }
+    #reload_crypto_tables();
 }
