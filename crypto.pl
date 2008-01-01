@@ -46,6 +46,7 @@ my $menu_tree = [
                 extra_data => 'gtk-new',
             },
             _Cheat => {
+                callback => \&cheat,
                 callback_action => 1,
                 callback_data => 'per entry cbdata',
                 accelerator => '<ctrl>S',
@@ -132,7 +133,7 @@ sub gen_random_key{
     for (0..$#alpha){
         if ($alpha[$_] eq $array[$_]) {
             gen_random_key();
-            #warn 'another key..';
+            #warn 'key not deranged, setting another..';
             return;
         }
     }
@@ -255,4 +256,18 @@ sub doVictory{
     $vb->pack_start($okbutton, TRUE, FALSE, 0);
     $victWin->add($vb);
     $victWin->show_all;
+}
+
+sub cheat{
+    my $cheatWin = Gtk2::Window->new();
+    my $label = Gtk2::Label->new($fortune);
+    my $okbutton = Gtk2::Button->new("ok");
+    $okbutton->signal_connect("clicked", sub {$cheatWin->destroy} );
+    my $vb = Gtk2::VBox->new(FALSE,0);
+    $vb->pack_start($label, TRUE, FALSE, 0);
+    $vb->pack_start($okbutton, TRUE, FALSE, 0);
+    $cheatWin->add($vb);
+    $cheatWin->show_all;
+    
+    
 }
