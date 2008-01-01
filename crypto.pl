@@ -8,7 +8,7 @@ use Text::Wrap;
 my $alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 my $fortune;
 my $key;
-my $numColumns = 24;
+my $numColumns = 34;
 my %encrypt;
 my %decrypt;
 my %guesses;
@@ -16,13 +16,7 @@ my %guesses;
 my $win = Gtk2::Window->new();
 $win->signal_connect("delete_event", sub {Gtk2->main_quit} );
 
-my $fields = q|x text | x $numColumns;
-$fields =~ s/\s*$//; #rm space at end
-my @fields = split(/\s+/, $fields);
-my $fortuneView = Gtk2::SimpleList->new (@fields);  
-@{$fortuneView->{data}} = (
-          [ 'text', 1, 1.1],
-          [ 'text', 2, 2.2]);
+my $fortuneView = Gtk2::Table->new(4, $numColumns);
 
 new_puzzle();
 $win->add($fortuneView);
@@ -61,19 +55,34 @@ sub getGuess{
     return '_';
 }
 
-#set data in the simplelist
+sub encrypt{
+    my $char = shift;
+    return $char unless defined $encrypt{$char};
+    return $encrypt{$char};
+}
+
+sub insert_char_label{
+    my ($char, $col, $row) = @_;
+    my $lbl = Gtk2::Label->new($char);
+    $fortuneView->attach_defaults ($lbl, $col,$col+1, $row,$row+1);
+    #print"$char $col $row\n";
+}
+
+#set data in the table
 sub reloadFortuneView{
-    
     $Text::Wrap::columns = $numColumns;
     #split into lines and then split each line into chars
     my @splitFortune = split ("\n", wrap('','',$fortune));
     @splitFortune = map { [split('',$_)] } @splitFortune;
-    @{$fortuneView->{data}} = ();
-    #$fortuneView->{data} = [];   #doesn't work. Something to do with tie?
-    for my $line (@splitFortune){
-        push @{$fortuneView->{data}}, [map {getGuess ($encrypt{$_} or $_)} @$line];
-        push @{$fortuneView->{data}}, [map {$encrypt{$_} or $_} @$line];
-        print @$line, "\n";
+    #someone should clear fortuneview
+    for (my $rownum=0 ; $rownum<@splitFortune ; $rownum++){
+        my @line=@{$splitFortune[$rownum]};
+        for (my $colnum=0 ; $colnum<@line ; $colnum++){
+            my $char=$line[$colnum];
+            insert_char_label (getGuess ($encrypt{$char} or $char), $colnum, 2*$rownum);
+            insert_char_label (encrypt($char), $colnum, 2*$rownum+1);
+        }
+        print @line, "\n";
     }
 }
 
