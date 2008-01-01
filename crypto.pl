@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 use strict;
 
 use Gtk2 '-init';
@@ -57,6 +57,7 @@ sub count_letters{
         $letterCount{$char}++  if  $char =~ /[A-Z]/;
         $char = encrypt($char);
         $enc_letterCount{$char}++  if  $char =~ /[A-Z]/;
+        $guesses{$char} = '';
     }
 }
 
@@ -181,7 +182,7 @@ sub make_guess{
     #adjust fortuneview to new guess
     #warn keys %guessLabels;
     for my $lbl ( @{ $guessLabels {decrypt($char)} } ){
-        my $text = defined $guesses{$char} ? $guesses{$char} : '_';
+        my $text = $guesses{$char} ? $guesses{$char} : '_';
         $lbl->set_text($text)
     }
     if (detectVictory()){
