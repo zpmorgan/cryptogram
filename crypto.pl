@@ -213,6 +213,35 @@ sub reloadGuessTable{
         $guessTable->attach_defaults ($lbl, $_,$_+1, 1,2);
     }
 }
+sub setGuessBgColor{
+    my ($char, $color) = @_;
+    my $widget = $guessEntries[ord($char) - ord('A')];
+    $color = Gtk2::Gdk::Color->parse ($color);
+    $widget->modify_base('normal', $color);
+    $widget->show_all();
+}
+#widget subsets
+my %blues;
+my %yellows;
+sub set_entry_conflicts{
+    my %sameAsGuess;
+    for (keys %guesses){
+        if ($_ eq $guesses{$_}){
+            $sameAsGuess{$_}=1;
+            unless ($blues{$_}){ #key and guess should be different
+                setGuessBgColor($_, 'lightblue');
+                $blues{$_} = 1;
+            }
+        }
+    }
+    for (keys %blues){
+        unless ($sameAsGuess{$_}){
+                setGuessBgColor($_, 'white');
+                delete $blues{$_};
+        }
+    }
+    
+}
 
 sub make_guess{
     my ($entry, $char) = @_;
@@ -232,6 +261,7 @@ sub make_guess{
         my $text = $guesses{$char} ? $guesses{$char} : '_';
         $lbl->set_text($text)
     }
+    set_entry_conflicts();
     if (detectVictory()){
         doVictory()
     }
@@ -270,6 +300,4 @@ sub cheat{
     $vb->pack_start($okbutton, TRUE, FALSE, 0);
     $cheatWin->add($vb);
     $cheatWin->show_all;
-    
-    
 }
