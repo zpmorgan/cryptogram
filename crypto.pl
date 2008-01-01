@@ -6,10 +6,12 @@ use Gtk2::SimpleList;
 use Text::Wrap;
 sub TRUE{1} sub FALSE{0}
 
+my $min_fortune=70;
+my $max_fortune=120;
+my $numColumns = 40;
 my $alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 my $fortune;
 my $key;
-my $numColumns = 34;
 my %encrypt;
 my %decrypt;
 my %guesses;  #win when enough of %guesses is like %decrypt. (not all letters are used.)
@@ -59,7 +61,7 @@ sub count_letters{
 }
 
 sub new_puzzle{
-    $fortune = uc get_fortune(50,100);
+    $fortune = uc get_fortune($min_fortune, $max_fortune);
     gen_random_key();
     count_letters();
     reload_crypto_tables();
@@ -168,7 +170,7 @@ sub reloadGuessTable{
 sub make_guess{
     my ($entry, $char) = @_;
     my $guess = $entry->get_text;
-    warn "$char $guess";
+    #warn "$char $guess";
     if ($guess =~ /[A-Za-z]/){
         $guesses{$char} = uc $guess
     }
@@ -189,7 +191,7 @@ sub make_guess{
 sub detectVictory{
     my $lettersCorrect = 0;
     for my $char (keys %enc_letterCount){
-        print ++$lettersCorrect, $char, ' ', $guesses{$char}, ' ', $decrypt{$char},"\n";
+        # print ++$lettersCorrect, $char, ' ', $guesses{$char}, ' ', $decrypt{$char},"\n";
         return 0 if $guesses{$char} ne $decrypt{$char}
     }
     return 1;
