@@ -17,24 +17,34 @@ my %guesses;# = qw|A A B B C V F D|;
 my $win = Gtk2::Window->new();
 $win->signal_connect("delete_event", sub {Gtk2->main_quit} );
 
-my $fortuneView = Gtk2::Table->new(6, $numColumns);
-my $guessTable = Gtk2::Table->new(2, 26, 1);
+my $fortuneView;
+my $guessTable;
 
-new_puzzle();
 
 my $vbox = Gtk2::VBox->new(FALSE,0);
-$vbox->pack_start($fortuneView, TRUE, FALSE, 0);
-$vbox->pack_start($guessTable, TRUE, FALSE, 0);
 $win->add($vbox);
+
+new_puzzle();
 
 $win->show_all;
 Gtk2->main();
 
+sub reload_crypto_tables{ #after every guess
+    $fortuneView->destroy if defined $fortuneView;
+    $guessTable->destroy if defined $guessTable;
+    $fortuneView = Gtk2::Table->new(6, $numColumns);
+    $guessTable = Gtk2::Table->new(2, 26, TRUE);
+    $vbox->pack_start($fortuneView, TRUE, FALSE, 0);
+    $vbox->pack_start($guessTable, TRUE, FALSE, 0);
+    reloadFortuneView();
+    reloadGuessTable();
+    $win->show_all;
+}
+
 sub new_puzzle{
     $fortune = uc get_fortune(50,100);
     gen_random_key();
-    reloadFortuneView();
-    reloadGuessTable();
+    reload_crypto_tables();
 }
 
 sub get_fortune{
@@ -95,10 +105,11 @@ sub reloadFortuneView{
         my @line=@{$splitFortune[$rownum]};
         for (my $colnum=0 ; $colnum<@line ; $colnum++){
             my $char=$line[$colnum];
-            insert_char_label (getGuess ($encrypt{$char} or $char), $colnum, 2*$rownum);
-            insert_char_label (encrypt($char), $colnum, 2*$rownum+1);
+            insert_char_label (getGuess ($encrypt{$char} or $char), $colnum, 3*$rownum);
+            insert_char_label (encrypt($char), $colnum, 3*$rownum+1);
         }
-        print @line, "\n";
+        insert_char_label(' ', 0, 3*$rownum+2)
+     #   print @line, "\n";
     }
 }
 
@@ -126,6 +137,5 @@ sub make_guess{
     else{
         delete $guesses{$char}
     }
-    reloadFortuneView();
-    reloadGuessTable();
+    reload_crypto_tables();
 }
