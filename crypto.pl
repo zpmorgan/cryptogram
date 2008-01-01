@@ -12,11 +12,13 @@ my $key;
 my $numColumns = 34;
 my %encrypt;
 my %decrypt;
-my %guesses;  #win when enough of %guesses is like %encrypt. (not all letters are used.)
+my %guesses;  #win when enough of %guesses is like %decrypt. (not all letters are used.)
 my %guessLabels; #lists of (empty at first) labels in fortuneview
 my @guessEntries; #list of 26 entries in guesstable
-my $winning_message = 
-    "Congratulations. You took 5 points from Jack Bauer. Run.";
+my %letterCount;  #unencrypted
+my %enc_letterCount;
+my $victory_message = 
+    "Congratulations.\n You took 5 points from Jack Bauer. \nRun.";
 
 my $win = Gtk2::Window->new();
 $win->signal_connect("delete_event", sub {Gtk2->main_quit} );
@@ -45,9 +47,21 @@ sub reload_crypto_tables{ #after every guess
     $win->show_all;
 }
 
+sub count_letters{
+    #count letters
+    %letterCount = ();
+    %enc_letterCount = ();
+    for my $char (split '', $fortune){
+        $letterCount{$char}++  if  $char =~ /[A-Z]/;
+        $char = encrypt($char);
+        $enc_letterCount{$char}++  if  $char =~ /[A-Z]/;
+    }
+}
+
 sub new_puzzle{
     $fortune = uc get_fortune(50,100);
     gen_random_key();
+    count_letters();
     reload_crypto_tables();
 }
 
@@ -137,19 +151,17 @@ sub reloadGuessTable{
     for (0..$#alpha){
         my $char = $alpha[$_];
         my $guessEntry = Gtk2::Entry->new_with_max_length (1);
-        #$guessEntry->set_text('');
         
         $guessEntry->set_size_request(20,20);
         $guessEntry->set_text(getGuess($char));
         $guessTable->attach_defaults ($guessEntry, $_,$_+1, 0,1);
-        #$guessEntry->signal_connect("delete-from-cursor", \&make_guess, $char);
-        $guessEntry->signal_connect("changed", \&make_guess, decrypt($char));
+        $guessEntry->set_text(''); #so they don't start with spaces for whatever reason
+        $guessEntry->signal_connect("changed", \&make_guess, $char);
         $guessEntries[$_] = $guessEntry;
         
         my $lbl = Gtk2::Label->new ($char);
         $guessTable->attach_defaults ($lbl, $_,$_+1, 1,2);
     }
-    map {$_->set_text('')} @guessEntries; #so they don't start with spaces for some reason
 }
 
 sub make_guess{
@@ -167,5 +179,35 @@ sub make_guess{
         my $text = defined $guesses{$char} ? $guesses{$char} : '_';
         $lbl->set_text($text)
     }
-    #reload_crypto_tables();
+    if (detectVictory()){
+        doVictory()
+    }
 }
+sub detectVictory{
+    my $lettersCorrect = 0;
+    return 1;
+    for my $char (keys %enc_letterCount){
+        #$char = encrypt($char);
+        #warn join ' ', keys %enc_letterCount;
+        #warn join ' ', values %enc_letterCount;
+        #warn join ' ', keys %guesses;
+        #warn join ' ', values %guesses;
+        print ++$lettersCorrect, $char, ' ', $guesses{$char}, ' ', $decrypt{$char},"\n";
+        return 0 if $guesses{$char} ne $decrypt{$char}
+    }
+    warn 'huh?';
+    return 1;
+}
+
+sub doVictory{
+    my $victWin = Gtk2::Window->new();
+    my $label = Gtk2::Label->new($victory_message);
+    my $okbutton = Gtk2::Button->new("ok");
+    $okbutton->signal_connect("clicked", sub {$victWin->destroy} );
+    my $vb = Gtk2::VBox->new(FALSE,0);
+    $vb->pack_start($label, TRUE, FALSE, 0);
+    $vb->pack_start($okbutton, TRUE, FALSE, 0);
+    $victWin->add($vb);
+    $victWin->show_all;
+}
+
