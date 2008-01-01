@@ -102,7 +102,7 @@ sub count_letters{
         $letterCount{$char}++  if  $char =~ /[A-Z]/;
         $char = encrypt($char);
         $enc_letterCount{$char}++  if  $char =~ /[A-Z]/;
-        $guesses{$char} = '';
+        $guesses{$char} = '' if $char  =~ /[A-Z]/;
     }
 }    
 
@@ -220,15 +220,17 @@ sub setGuessBgColor{
     $widget->modify_base('normal', $color);
     $widget->show_all();
 }
-#widget subsets
+#letters never represent themselves. Blue when people guess otherwise.
+#letter representations are one-to-one. Yellow when that is violated.
 my %blues;
 my %yellows;
 sub set_entry_conflicts{
+    #key and guess should be different
     my %sameAsGuess;
     for (keys %guesses){
         if ($_ eq $guesses{$_}){
             $sameAsGuess{$_}=1;
-            unless ($blues{$_}){ #key and guess should be different
+            unless ($blues{$_}){ 
                 setGuessBgColor($_, 'lightblue');
                 $blues{$_} = 1;
             }
@@ -236,11 +238,40 @@ sub set_entry_conflicts{
     }
     for (keys %blues){
         unless ($sameAsGuess{$_}){
-                setGuessBgColor($_, 'white');
-                delete $blues{$_};
+            setGuessBgColor($_, 'white');
+            setGuessBgColor($_, 'yellow') if $yellows{$_};
+            delete $blues{$_};
         }
     }
-    
+    #only one-to-one guesses
+    my %multiple_guesses;
+    for (values %guesses){
+        next unless defined $_;
+        $multiple_guesses{$_}++;
+        #print $_;
+    }
+    #print %multiple_guesses;
+    for my $key (keys %guesses){
+        my $guess = $guesses{$key};
+        next unless $guess;
+        next unless defined $multiple_guesses{$guess};
+        next unless ($multiple_guesses{$guess} > 1);
+        next if $yellows{$key};
+        #warn "$key $guess $multiple_guesses{$guess}";
+        setGuessBgColor($key, 'yellow');
+        $yellows{$key} = 1;
+    }
+ #   warn join ' ', keys %guesses;
+ #   warn join ' ', values %guesses;
+ #   warn join ' ', keys %multiple_guesses;
+ #   warn join ' ', values %multiple_guesses;
+    #unyellow:
+    for (keys %yellows){
+        next if $guesses{$_} and $multiple_guesses{$guesses{$_}} > 1;
+        setGuessBgColor($_, 'white');
+        setGuessBgColor($_, 'lightblue') if $blues{$_};
+        delete $yellows{$_};
+    }
 }
 
 sub make_guess{
