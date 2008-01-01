@@ -2,7 +2,8 @@
 use strict;
 
 use Gtk2 '-init';
-use Gtk2::SimpleList;
+#use Gtk2::SimpleList;  
+use Gtk2::SimpleMenu;
 use Text::Wrap;
 sub TRUE{1} sub FALSE{0}
 
@@ -12,6 +13,7 @@ my $numColumns = 40;
 my $alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 my $fortune;
 my $key;
+my $victorious = FALSE;
 my %encrypt;
 my %decrypt;
 my %guesses;  #win when enough of %guesses is like %decrypt. (not all letters are used.)
@@ -32,10 +34,50 @@ my $guessTable;
 my $vbox = Gtk2::VBox->new(FALSE,0);
 $win->add($vbox);
 
+my $menu_tree = [
+    _File => {
+        item_type => '<Branch>',
+        children => [
+            _New => {
+                item_type => '<StockItem>',
+                callback => \&new_puzzle,
+                callback_action => 0,
+                accelerator => '<ctrl>N',
+                extra_data => 'gtk-new',
+            },
+            _Cheat => {
+                callback_action => 1,
+                callback_data => 'per entry cbdata',
+                accelerator => '<ctrl>S',
+            },
+            _Quit => {
+                item_type => '<StockItem>',
+                callback => sub{Gtk2->main_quit},
+                callback_action => 2,
+                extra_data => 'gtk-quit',
+            },
+        ]
+     },
+];
+my $menu = Gtk2::SimpleMenu->new (
+        menu_tree => $menu_tree,
+        default_callback => sub {print "unimplemented\n"},
+        user_data => 'user_data',
+);
+
+$vbox->pack_start($menu->{widget}, TRUE, FALSE, 0);
 new_puzzle();
 
 $win->show_all;
 Gtk2->main();
+
+sub new_puzzle{
+    $victorious = FALSE;
+    $fortune = uc get_fortune($min_fortune, $max_fortune);
+    gen_random_key();
+    count_letters();
+    reload_crypto_tables();
+}
 
 sub reload_crypto_tables{ #after every guess
     $fortuneView->destroy if defined $fortuneView;
@@ -60,13 +102,6 @@ sub count_letters{
         $guesses{$char} = '';
     }
 }    
-
-sub new_puzzle{
-    $fortune = uc get_fortune($min_fortune, $max_fortune);
-    gen_random_key();
-    count_letters();
-    reload_crypto_tables();
-}
 
 sub get_fortune{
     my ($min,$max) = @_;
@@ -191,6 +226,7 @@ sub make_guess{
     }
 }
 sub detectVictory{
+    return 0 if $victorious;
     my $lettersCorrect = 0;
     for my $char (keys %enc_letterCount){
         # print ++$lettersCorrect, $char, ' ', $guesses{$char}, ' ', $decrypt{$char},"\n";
@@ -201,6 +237,7 @@ sub detectVictory{
 }
 
 sub doVictory{
+    $victorious = TRUE;
     my $victWin = Gtk2::Window->new();
     my $label = Gtk2::Label->new($victory_message);
     my $okbutton = Gtk2::Button->new("ok");
