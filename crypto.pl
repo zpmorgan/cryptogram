@@ -49,12 +49,13 @@ my $menu_tree = [
                 callback => \&cheat,
                 callback_action => 1,
                 callback_data => 'per entry cbdata',
-                accelerator => '<ctrl>S',
+                accelerator => '<ctrl>C',
             },
             _Quit => {
                 item_type => '<StockItem>',
                 callback => sub{Gtk2->main_quit},
                 callback_action => 2,
+                accelerator => '<ctrl>Q',
                 extra_data => 'gtk-quit',
             },
         ]
@@ -67,6 +68,7 @@ my $menu = Gtk2::SimpleMenu->new (
 );
 
 $vbox->pack_start($menu->{widget}, TRUE, FALSE, 0);
+$win->add_accel_group($menu->{accel_group});
 new_puzzle();
 
 $win->show_all;
