@@ -173,7 +173,8 @@ sub make_guess{
     my $guess = $entry->get_text;
     #warn "$char $guess";
     if ($guess =~ /[A-Za-z]/){
-        $guesses{$char} = uc $guess
+        $guesses{$char} = uc $guess;
+        $entry->set_text(uc $guess);
     }
     else{
         $entry->set_text('');
