@@ -4,6 +4,7 @@ use strict;
 use Gtk2 '-init';
 use Gtk2::SimpleList;
 use Text::Wrap;
+sub TRUE{1} sub FALSE{0}
 
 my $alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 my $fortune;
@@ -11,18 +12,30 @@ my $key;
 my $numColumns = 34;
 my %encrypt;
 my %decrypt;
-my %guesses;
+my %guesses;# = qw|A A B B C V F D|;
 
 my $win = Gtk2::Window->new();
 $win->signal_connect("delete_event", sub {Gtk2->main_quit} );
 
-my $fortuneView = Gtk2::Table->new(4, $numColumns);
+my $fortuneView = Gtk2::Table->new(6, $numColumns);
+my $guessTable = Gtk2::Table->new(2, 26, 1);
 
 new_puzzle();
-$win->add($fortuneView);
+
+my $vbox = Gtk2::VBox->new(FALSE,0);
+$vbox->pack_start($fortuneView, TRUE, FALSE, 0);
+$vbox->pack_start($guessTable, TRUE, FALSE, 0);
+$win->add($vbox);
 
 $win->show_all;
 Gtk2->main();
+
+sub new_puzzle{
+    $fortune = uc get_fortune(50,100);
+    gen_random_key();
+    reloadFortuneView();
+    reloadGuessTable();
+}
 
 sub get_fortune{
     my ($min,$max) = @_;
@@ -30,6 +43,8 @@ sub get_fortune{
         my $fortune = `fortune`;
         next if length ($fortune) < $min;
         next if length ($fortune) > $max;
+        $fortune =~ s/\t/   /; #tabs to (3) spaces
+        $fortune =~ s/\n\S/ /; #newlines to 1 space, unless there's space after it.
         return $fortune;
     }
 }
@@ -48,6 +63,7 @@ sub gen_random_key{
         $encrypt{$array[$_]} = $alpha[$_];
     }
 }
+
 sub getGuess{
     my $char = shift;
     return $char    if    $char !~ /[A-Z]/; #space, num, or punctuation
@@ -86,8 +102,30 @@ sub reloadFortuneView{
     }
 }
 
-sub new_puzzle{
-    $fortune = uc get_fortune(50,100);
-    gen_random_key;
-    reloadFortuneView;
+sub reloadGuessTable{
+    my @alpha = split //, $alpha; #all uc letters
+    for (0..$#alpha){
+        my $char = $alpha[$_];
+        my $guessEntry = Gtk2::Entry->new_with_max_length (1);
+        $guessEntry->set_size_request(20,20);
+        $guessEntry->set_text(getGuess($char));
+        $guessTable->attach_defaults ($guessEntry, $_,$_+1, 0,1);
+        $guessEntry->signal_connect("activate", \&make_guess, $char);
+        
+        my $lbl = Gtk2::Label->new ($char);
+        $guessTable->attach_defaults ($lbl, $_,$_+1, 1,2);
+    }
+}
+
+sub make_guess{
+    my ($entry, $char) = @_;
+    my $guess = $entry->get_text;
+    if ($guess =~ /[A-Za-z]/){
+        $guesses{$char} = uc $guess
+    }
+    else{
+        delete $guesses{$char}
+    }
+    reloadFortuneView();
+    reloadGuessTable();
 }
