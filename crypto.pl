@@ -153,9 +153,10 @@ sub reloadGuessTable{
         my $guessEntry = Gtk2::Entry->new_with_max_length (1);
         
         $guessEntry->set_size_request(20,20);
-        $guessEntry->set_text(getGuess($char));
+        #my $guess = getGuess($char) or '';
+        my $guess = '';
+        $guessEntry->set_text ($guess);
         $guessTable->attach_defaults ($guessEntry, $_,$_+1, 0,1);
-        $guessEntry->set_text(''); #so they don't start with spaces for whatever reason
         $guessEntry->signal_connect("changed", \&make_guess, $char);
         $guessEntries[$_] = $guessEntry;
         
@@ -167,6 +168,7 @@ sub reloadGuessTable{
 sub make_guess{
     my ($entry, $char) = @_;
     my $guess = $entry->get_text;
+    warn "$char $guess";
     if ($guess =~ /[A-Za-z]/){
         $guesses{$char} = uc $guess
     }
@@ -175,7 +177,8 @@ sub make_guess{
         delete $guesses{$char}
     }
     #adjust fortuneview to new guess
-    for my $lbl (@{$guessLabels{$char}}){
+    #warn keys %guessLabels;
+    for my $lbl ( @{ $guessLabels {decrypt($char)} } ){
         my $text = defined $guesses{$char} ? $guesses{$char} : '_';
         $lbl->set_text($text)
     }
@@ -185,17 +188,10 @@ sub make_guess{
 }
 sub detectVictory{
     my $lettersCorrect = 0;
-    return 1;
     for my $char (keys %enc_letterCount){
-        #$char = encrypt($char);
-        #warn join ' ', keys %enc_letterCount;
-        #warn join ' ', values %enc_letterCount;
-        #warn join ' ', keys %guesses;
-        #warn join ' ', values %guesses;
         print ++$lettersCorrect, $char, ' ', $guesses{$char}, ' ', $decrypt{$char},"\n";
         return 0 if $guesses{$char} ne $decrypt{$char}
     }
-    warn 'huh?';
     return 1;
 }
 
@@ -210,4 +206,3 @@ sub doVictory{
     $victWin->add($vb);
     $victWin->show_all;
 }
-
