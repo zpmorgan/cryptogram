@@ -59,7 +59,7 @@ sub count_letters{
         $enc_letterCount{$char}++  if  $char =~ /[A-Z]/;
         $guesses{$char} = '';
     }
-}
+}    
 
 sub new_puzzle{
     $fortune = uc get_fortune($min_fortune, $max_fortune);
@@ -193,6 +193,7 @@ sub detectVictory{
     my $lettersCorrect = 0;
     for my $char (keys %enc_letterCount){
         # print ++$lettersCorrect, $char, ' ', $guesses{$char}, ' ', $decrypt{$char},"\n";
+        return 0 unless defined $guesses{$char};
         return 0 if $guesses{$char} ne $decrypt{$char}
     }
     return 1;
