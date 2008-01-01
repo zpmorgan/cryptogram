@@ -98,7 +98,7 @@ sub gen_random_key{
 sub getGuess{
     my $char = shift;
     return $char    if    $char !~ /[A-Z]/; #space, num, or punctuation
-    return $guesses{$char}  if  defined $guesses{$char};
+    return $guesses{$char}  if $guesses{$char};
     return '_';
 }
 
