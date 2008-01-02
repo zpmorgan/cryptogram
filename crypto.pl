@@ -124,7 +124,6 @@ sub gen_random_key{
     my @alpha = @array;
     for (my $i = @array; --$i; ) {
         my $j = int rand ($i+1);
-        next if $i == $j;
         @array[$i, $j] = @array[$j, $i];
     }
     for (0..$#alpha){
