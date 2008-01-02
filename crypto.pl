@@ -83,7 +83,7 @@ sub new_puzzle{
     reload_crypto_tables();
 }
 
-sub reload_crypto_tables{ #after every guess
+sub reload_crypto_tables{
     $fortuneView->destroy if defined $fortuneView;
     $guessTable->destroy if defined $guessTable;
     $fortuneView = Gtk2::Table->new(6, $numColumns);
