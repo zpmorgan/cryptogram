@@ -114,6 +114,7 @@ sub get_fortune{
         next if length ($fortune) < $min;
         next if length ($fortune) > $max;
         $fortune =~ s/\t/   /g; #tabs to (3) spaces
+        $fortune =~ s/\n(\S)/ $1/g; #newlines to 1 space, unless there's space after it.
         return $fortune;
     }
 }
