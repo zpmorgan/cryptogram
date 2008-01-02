@@ -76,6 +76,7 @@ Gtk2->main();
 
 sub new_puzzle{
     $victorious = FALSE;
+    %guesses = ();
     $fortune = uc get_fortune($min_fortune, $max_fortune);
     gen_random_key();
     count_letters();
@@ -112,8 +113,8 @@ sub get_fortune{
         my $fortune = `fortune`;
         next if length ($fortune) < $min;
         next if length ($fortune) > $max;
-        $fortune =~ s/\t/   /; #tabs to (3) spaces
-        $fortune =~ s/\n\S/ /; #newlines to 1 space, unless there's space after it.
+        $fortune =~ s/\t/   /g; #tabs to (3) spaces
+        $fortune =~ s/\n\S/ /g; #newlines to 1 space, unless there's space after it.
         return $fortune;
     }
 }
