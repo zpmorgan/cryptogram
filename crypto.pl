@@ -7,8 +7,9 @@ use Gtk2::SimpleMenu;
 use Text::Wrap;
 sub TRUE{1} sub FALSE{0}
 
-my $min_fortune=70;
-my $max_fortune=120;
+my $min_fortune=80;
+my $max_fortune=130;
+my $fortune_command = "fortune -n $min_fortune -l";
 my $numColumns = 40;
 my $alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 my $fortune;
@@ -71,7 +72,6 @@ $vbox->pack_start($menu->{widget}, TRUE, FALSE, 0);
 $win->add_accel_group($menu->{accel_group});
 new_puzzle();
 
-$win->show_all;
 Gtk2->main();
 
 sub new_puzzle{
@@ -110,11 +110,10 @@ sub count_letters{
 sub get_fortune{
     my ($min,$max) = @_;
     while(1){
-        my $fortune = `fortune`;
+        my $fortune = `$fortune_command`;
         next if length ($fortune) < $min;
         next if length ($fortune) > $max;
         $fortune =~ s/\t/   /g; #tabs to (3) spaces
-        $fortune =~ s/\n\S/ /g; #newlines to 1 space, unless there's space after it.
         return $fortune;
     }
 }
