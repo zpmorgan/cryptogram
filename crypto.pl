@@ -344,4 +344,7 @@ sub cheat{
     $cheatWin->add($vb);
     $cheatWin->show_all;
 }
-
+BEGIN{
+    # if I don't do this, Text::Wrap will turn spaces into tabs
+    $Text::Wrap::unexpand = 0;
+}
