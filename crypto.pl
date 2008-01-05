@@ -99,7 +99,7 @@ sub count_letters{
     #count letters
     %letterCount = ();
     %enc_letterCount = ();
-    for my $char (split '', $fortune){
+    for my $char (split //, $fortune){
         $letterCount{$char}++  if  $char =~ /[A-Z]/;
         $char = encrypt($char);
         $enc_letterCount{$char}++  if  $char =~ /[A-Z]/;
@@ -121,7 +121,7 @@ sub get_fortune{
 
 sub gen_random_key{
     ####sub fisher_yates_shuffle {
-    my @array = split ("", $alpha);
+    my @array = split (//, $alpha);
     my @alpha = @array;
     for (my $i = @array; --$i; ) {
         my $j = int rand ($i+1);
@@ -170,7 +170,7 @@ sub insert_char_label{
 sub get_fortune_chars{
     $Text::Wrap::columns = $numColumns;
     my @splitFortune = split ("\n", wrap('','',$fortune));
-    @splitFortune = map { [split('',$_)] } @splitFortune;
+    @splitFortune = map { [split(//,$_)] } @splitFortune;
     return @splitFortune;
 }
 
@@ -308,6 +308,7 @@ sub detectVictory{
     return 1;
 }
 
+#display victory window
 sub doVictory{
     $victorious = TRUE;
     my $victWin = Gtk2::Window->new();
