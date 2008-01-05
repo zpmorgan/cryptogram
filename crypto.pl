@@ -11,6 +11,8 @@ my $min_fortune=80;
 my $max_fortune=130;
 my $fortune_command = "fortune -n $min_fortune -l";
 my $numColumns = 40;
+my $font_size = 15;
+
 my $alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 my $fortune;
 my $key;
@@ -24,6 +26,8 @@ my %letterCount;  #unencrypted
 my %enc_letterCount;
 my $victory_message = 
     "Congratulations.\n You took 5 points from Jack Bauer. \nRun.";
+my $labelfont = Gtk2::Pango::FontDescription->from_string("Andale Mono Bold $font_size");
+my $entryfont = Gtk2::Pango::FontDescription->from_string("Andale Mono $font_size");
 
 my $win = Gtk2::Window->new();
 $win->signal_connect("delete_event", sub {Gtk2->main_quit} );
@@ -182,10 +186,12 @@ sub reloadFortuneView{
             my $char=$line[$colnum];
             
             my $label1 = Gtk2::Label->new (getGuess ($encrypt{$char} or $char));
+            useMyLabelFont($label1);
             insert_char_label ($label1, $colnum, 3*$rownum);
             push @{$guessLabels{$char}}, $label1;
             
             my $label2 = Gtk2::Label->new (encrypt($char));
+            useMyLabelFont($label2);
             insert_char_label ($label2, $colnum, 3*$rownum+1);
         }
         insert_char_label(Gtk2::Label->new(' '), 0, 3*$rownum+2);
@@ -197,8 +203,9 @@ sub reloadGuessTable{
     for (0..$#alpha){
         my $char = $alpha[$_];
         my $guessEntry = Gtk2::Entry->new_with_max_length (1);
+        useMyEntryFont ($guessEntry);
         
-        $guessEntry->set_size_request(20,20);
+        $guessEntry->set_size_request ($font_size+6, $font_size*2);
         my $guess = '';
         $guessEntry->set_text ($guess);
         $guessTable->attach_defaults ($guessEntry, $_,$_+1, 0,1);
@@ -206,6 +213,7 @@ sub reloadGuessTable{
         $guessEntries[$_] = $guessEntry;
         
         my $lbl = Gtk2::Label->new ($char);
+        useMyLabelFont($lbl);
         $guessTable->attach_defaults ($lbl, $_,$_+1, 1,2);
     }
 }
@@ -296,11 +304,21 @@ sub detectVictory{
     return 1;
 }
 
+sub useMyLabelFont{
+    my $label = shift;
+    $label->modify_font($labelfont);
+}
+sub useMyEntryFont{
+    my $label = shift;
+    $label->modify_font($entryfont);
+}
+
 #display victory window
 sub doVictory{
     $victorious = TRUE;
     my $victWin = Gtk2::Window->new();
     my $label = Gtk2::Label->new($victory_message);
+    useMyLabelFont ($label);
     my $okbutton = Gtk2::Button->new("ok");
     $okbutton->signal_connect("clicked", sub {$victWin->destroy} );
     my $vb = Gtk2::VBox->new(FALSE,0);
@@ -312,7 +330,12 @@ sub doVictory{
 
 sub cheat{
     my $cheatWin = Gtk2::Window->new();
-    my $label = Gtk2::Label->new($fortune);
+    
+    $Text::Wrap::columns = $numColumns;
+    my $wrappedFortune = wrap('','',$fortune);
+    
+    my $label = Gtk2::Label->new($wrappedFortune);
+    useMyLabelFont ($label);
     my $okbutton = Gtk2::Button->new("ok");
     $okbutton->signal_connect("clicked", sub {$cheatWin->destroy} );
     my $vb = Gtk2::VBox->new(FALSE,0);
@@ -321,3 +344,4 @@ sub cheat{
     $cheatWin->add($vb);
     $cheatWin->show_all;
 }
+
