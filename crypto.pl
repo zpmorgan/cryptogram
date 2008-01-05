@@ -31,7 +31,6 @@ $win->signal_connect("delete_event", sub {Gtk2->main_quit} );
 my $fortuneView;
 my $guessTable;
 
-
 my $vbox = Gtk2::VBox->new(FALSE,0);
 $win->add($vbox);
 
@@ -96,7 +95,6 @@ sub reload_crypto_tables{
 }
 
 sub count_letters{
-    #count letters
     %letterCount = ();
     %enc_letterCount = ();
     for my $char (split //, $fortune){
@@ -114,13 +112,14 @@ sub get_fortune{
         next if length ($fortune) < $min;
         next if length ($fortune) > $max;
         $fortune =~ s/\t/   /g; #tabs to (3) spaces
-        $fortune =~ s/\n(\S)/ $1/g; #newlines to 1 space, unless there's space after it.
+        #newlines to 1 space, unless there's space after it. (as in quotes)
+        $fortune =~ s/\n(\S)/ $1/g; 
         return $fortune;
     }
 }
 
+#modified fisher yates shuffle
 sub gen_random_key{
-    ####sub fisher_yates_shuffle {
     my @array = split (//, $alpha);
     my @alpha = @array;
     for (my $i = @array; --$i; ) {
@@ -135,7 +134,7 @@ sub gen_random_key{
     for (0..$#alpha){
         if ($alpha[$_] eq $array[$_]) {
             gen_random_key();
-            #warn 'key not deranged, setting another..';
+            #print "key not deranged, setting another..\n";
             return;
         }
     }
@@ -163,7 +162,6 @@ sub decrypt{
 sub insert_char_label{
     my ($lbl, $col, $row) = @_;
     $fortuneView->attach_defaults ($lbl, $col,$col+1, $row,$row+1);
-    #print"$char $col $row\n";
 }
 
 #split into lines and then split each line into chars
@@ -190,8 +188,7 @@ sub reloadFortuneView{
             my $label2 = Gtk2::Label->new (encrypt($char));
             insert_char_label ($label2, $colnum, 3*$rownum+1);
         }
-        insert_char_label(Gtk2::Label->new(' '), 0, 3*$rownum+2)
-     #   print @line, "\n";
+        insert_char_label(Gtk2::Label->new(' '), 0, 3*$rownum+2);
     }
 }
 
@@ -202,7 +199,6 @@ sub reloadGuessTable{
         my $guessEntry = Gtk2::Entry->new_with_max_length (1);
         
         $guessEntry->set_size_request(20,20);
-        #my $guess = getGuess($char) or '';
         my $guess = '';
         $guessEntry->set_text ($guess);
         $guessTable->attach_defaults ($guessEntry, $_,$_+1, 0,1);
@@ -250,7 +246,6 @@ sub set_entry_conflicts{
         $multiple_guesses{$_}++;
         #print $_;
     }
-    #print %multiple_guesses;
     for my $key (keys %guesses){
         my $guess = $guesses{$key};
         next unless $guess;
@@ -261,10 +256,6 @@ sub set_entry_conflicts{
         setGuessBgColor($key, 'yellow');
         $yellows{$key} = 1;
     }
- #   warn join ' ', keys %guesses;
- #   warn join ' ', values %guesses;
- #   warn join ' ', keys %multiple_guesses;
- #   warn join ' ', values %multiple_guesses;
     #unyellow:
     for (keys %yellows){
         next if $guesses{$_} and $multiple_guesses{$guesses{$_}} > 1;
@@ -277,7 +268,6 @@ sub set_entry_conflicts{
 sub make_guess{
     my ($entry, $char) = @_;
     my $guess = $entry->get_text;
-    #warn "$char $guess";
     if ($guess =~ /[A-Za-z]/){
         $guesses{$char} = uc $guess;
         $entry->set_text(uc $guess);
@@ -287,7 +277,6 @@ sub make_guess{
         delete $guesses{$char}
     }
     #adjust fortuneview to new guess
-    #warn keys %guessLabels;
     for my $lbl ( @{ $guessLabels {decrypt($char)} } ){
         my $text = $guesses{$char} ? $guesses{$char} : '_';
         $lbl->set_text($text)
@@ -301,7 +290,6 @@ sub detectVictory{
     return 0 if $victorious;
     my $lettersCorrect = 0;
     for my $char (keys %enc_letterCount){
-        # print ++$lettersCorrect, $char, ' ', $guesses{$char}, ' ', $decrypt{$char},"\n";
         return 0 unless defined $guesses{$char};
         return 0 if $guesses{$char} ne $decrypt{$char}
     }
